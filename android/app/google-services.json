@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "356188233439",
+    "project_id": "picsapp1-323af",
+    "storage_bucket": "picsapp1-323af.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:356188233439:android:f4ee7f9a578b06dab1136a",
+        "android_client_info": {
+          "package_name": "com.example.picsapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCyiMi-tJjaJPJ0x0ezJu07t8b2ByTcggE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
