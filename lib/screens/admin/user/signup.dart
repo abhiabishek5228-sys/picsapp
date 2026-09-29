@@ -1,6 +1,7 @@
-
 import 'package:flutter/material.dart';
 import 'package:picsapp/provider/logic.dart';
+
+import 'package:picsapp/screens/admin/user/signin.dart';
 import 'package:picsapp/widgets/authtextfield.dart';
 import 'package:picsapp/widgets/socialbutton.dart';
 
@@ -40,7 +41,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         signUpLogic.validateEmail(emailController.text);
 
     String? passwordError =
-        signUpLogic.validatePassword(passwordController.text);
+        signUpLogic.validatePassword(
+      passwordController.text,
+    );
 
     String? confirmPasswordError =
         signUpLogic.validateConfirmPassword(
@@ -94,7 +97,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 20),
 
               // ================= LOGO =================
-
               Container(
                 height: 100,
                 width: 100,
@@ -102,8 +104,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
                     colors: [
-                      Color(0xff6C63FF),
-                      Color(0xff405DE6),
+                      Colors.deepPurple,
+                      Colors.purpleAccent,
                     ],
                   ),
                 ),
@@ -117,7 +119,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 22),
 
               // ================= APP NAME =================
-
               const Text(
                 'P I C E S',
                 style: TextStyle(
@@ -131,7 +132,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 12),
 
               // ================= DESCRIPTION =================
-
               const Text(
                 'Join our community and start sharing your favorite moments',
                 textAlign: TextAlign.center,
@@ -145,7 +145,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 35),
 
               // ================= NAME =================
-
               AuthTextField(
                 controller: nameController,
                 hintText: 'Name',
@@ -155,7 +154,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 15),
 
               // ================= EMAIL =================
-
               AuthTextField(
                 controller: emailController,
                 hintText: 'Email',
@@ -166,7 +164,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 15),
 
               // ================= PASSWORD =================
-
               AuthTextField(
                 controller: passwordController,
                 hintText: 'Password',
@@ -190,7 +187,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 15),
 
               // ================= CONFIRM PASSWORD =================
-
               AuthTextField(
                 controller: confirmPasswordController,
                 hintText: 'Confirm Password',
@@ -215,7 +211,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 25),
 
               // ================= CREATE ACCOUNT =================
-
               SizedBox(
                 width: double.infinity,
                 height: 55,
@@ -242,7 +237,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 25),
 
               // ================= OR =================
-
               const Row(
                 children: [
                   Expanded(
@@ -270,7 +264,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 22),
 
               // ================= GOOGLE =================
-
               SocialButton(
                 icon: Icons.g_mobiledata,
                 text: 'Continue with Google',
@@ -280,7 +273,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 12),
 
               // ================= APPLE =================
-
               SocialButton(
                 icon: Icons.apple,
                 text: 'Continue with Apple',
@@ -290,7 +282,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 12),
 
               // ================= FACEBOOK =================
-
               SocialButton(
                 icon: Icons.facebook,
                 text: 'Continue with Facebook',
@@ -300,7 +291,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 28),
 
               // ================= SIGN IN =================
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -312,7 +302,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const SignInScreen(),
+                        ),
+                      );
                     },
                     child: const Text(
                       'Sign In',
@@ -325,7 +321,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ],
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
+
+              // ================= GUEST MODE =================
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const SignInScreen(),
+                        ),
+                      );
+                },
+                child: const Text(
+                  'Continue as Guest',
+                  style: TextStyle(
+                    color: Color(0xff8F94A7),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 10),
             ],
           ),
         ),
