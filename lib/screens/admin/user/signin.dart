@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:picsapp/provider/logic.dart';
 import 'package:picsapp/widgets/authtextfield.dart';
 import 'package:picsapp/widgets/socialbutton.dart';
@@ -14,8 +15,6 @@ class _SignInScreenState extends State<SignInScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-  final SignInProvider signInLogic = SignInProvider();
-
   bool obscurePassword = true;
 
   @override
@@ -25,59 +24,59 @@ class _SignInScreenState extends State<SignInScreen> {
     super.dispose();
   }
 
-  void signIn() {
-    String? emailError =
-        signInLogic.validateEmail(emailController.text);
+  Future<void> signIn() async {
+    // 1. Read the provider
+    final signInLogic = context.read<SignInProvider>();
 
-    String? passwordError =
-        signInLogic.validatePassword(passwordController.text);
+    // 2. Validate
+    String? emailError = signInLogic.validateEmail(emailController.text);
+    String? passwordError = signInLogic.validatePassword(
+      passwordController.text,
+    );
 
-    if (emailError != null) {
-      showMessage(emailError);
-      return;
+    if (emailError != null) return showMessage(emailError);
+    if (passwordError != null) return showMessage(passwordError);
+
+    // 3. Call Firebase
+    final error = await signInLogic.signIn(
+      email: emailController.text,
+      password: passwordController.text,
+    );
+
+    if (error != null) {
+      showMessage(error);
+    } else {
+      showMessage('Login successful!');
+      // TODO: Navigate to your Home Screen here
+      // Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
     }
-
-    if (passwordError != null) {
-      showMessage(passwordError);
-      return;
-    }
-
-    showMessage('All details are valid');
   }
 
   void showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<SignInProvider>().isLoading;
+
     return Scaffold(
       backgroundColor: const Color(0xff060A14),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 30,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
           child: Column(
             children: [
               const SizedBox(height: 20),
-
-              // Logo
               Container(
                 height: 100,
                 width: 100,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [
-                      Colors.deepPurple,
-                      Colors.purpleAccent,
-                    ],
+                  gradient: LinearGradient(
+                    colors: [Colors.deepPurple, Colors.purpleAccent],
                   ),
                 ),
                 child: const Icon(
@@ -86,10 +85,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   size: 50,
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // PICES
               const Text(
                 'P I C E S',
                 style: TextStyle(
@@ -99,43 +95,28 @@ class _SignInScreenState extends State<SignInScreen> {
                   letterSpacing: 5,
                 ),
               ),
-
               const SizedBox(height: 10),
-
-              // Tagline
               const Text(
                 'Sign in to explore amazing images',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white60,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.white60, fontSize: 14),
               ),
-
               const SizedBox(height: 40),
-
-              // Email
               AuthTextField(
                 controller: emailController,
                 hintText: 'Email',
                 icon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
               ),
-
               const SizedBox(height: 16),
-
-              // Password
               AuthTextField(
                 controller: passwordController,
                 hintText: 'Password',
                 icon: Icons.lock_outline,
                 obscureText: obscurePassword,
                 suffixIcon: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      obscurePassword = !obscurePassword;
-                    });
-                  },
+                  onPressed: () =>
+                      setState(() => obscurePassword = !obscurePassword),
                   icon: Icon(
                     obscurePassword
                         ? Icons.visibility_outlined
@@ -144,16 +125,11 @@ class _SignInScreenState extends State<SignInScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 8),
-
-              // Forgot Password
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () {
-                    showMessage('Forgot password clicked');
-                  },
+                  onPressed: () => showMessage('Forgot password clicked'),
                   child: const Text(
                     'Forgot Password?',
                     style: TextStyle(
@@ -164,15 +140,12 @@ class _SignInScreenState extends State<SignInScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 14),
-
-              // Sign In Button
               SizedBox(
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
-                  onPressed: signIn,
+                  onPressed: isLoading ? null : signIn,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xff6255F5),
                     foregroundColor: Colors.white,
@@ -181,96 +154,63 @@ class _SignInScreenState extends State<SignInScreen> {
                       borderRadius: BorderRadius.circular(17),
                     ),
                   ),
-                  child: const Text(
-                    'Sign In',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  child: isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          'Sign In',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
-
               const SizedBox(height: 30),
-
-              // OR
               Row(
                 children: [
                   Expanded(
-                    child: Container(
-                      height: 1,
-                      color: const Color(0xff30364A),
-                    ),
+                    child: Container(height: 1, color: const Color(0xff30364A)),
                   ),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 15),
                     child: Text(
                       'OR',
-                      style: TextStyle(
-                        color: Colors.white54,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: Colors.white54, fontSize: 12),
                     ),
                   ),
                   Expanded(
-                    child: Container(
-                      height: 1,
-                      color: const Color(0xff30364A),
-                    ),
+                    child: Container(height: 1, color: const Color(0xff30364A)),
                   ),
                 ],
               ),
-
               const SizedBox(height: 24),
-
-              // Google
               SocialButton(
                 icon: Icons.g_mobiledata,
                 text: 'Continue with Google',
-                onPressed: () {
-                  showMessage('Google Sign In clicked');
-                },
+                onPressed: () => showMessage('Google clicked'),
               ),
-
               const SizedBox(height: 12),
-
-              // Apple
               SocialButton(
                 icon: Icons.apple,
                 text: 'Continue with Apple',
-                onPressed: () {
-                  showMessage('Apple Sign In clicked');
-                },
+                onPressed: () => showMessage('Apple clicked'),
               ),
-
               const SizedBox(height: 12),
-
-              // Facebook
               SocialButton(
                 icon: Icons.facebook,
                 text: 'Continue with Facebook',
-                onPressed: () {
-                  showMessage('Facebook Sign In clicked');
-                },
+                onPressed: () => showMessage('Facebook clicked'),
               ),
-
               const SizedBox(height: 28),
-
-              // Sign Up
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
                     "Don't have an account?",
-                    style: TextStyle(
-                      color: Colors.white60,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.white60, fontSize: 14),
                   ),
                   TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
+                    onPressed: () => Navigator.pop(context),
                     child: const Text(
                       ' Sign Up',
                       style: TextStyle(
@@ -282,8 +222,18 @@ class _SignInScreenState extends State<SignInScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 10),
+              TextButton(
+                onPressed: () {},
+                child: Text(
+                  "Guest Mode",
+                  style: TextStyle(
+                    color: Color(0xff8B7CFF),
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
