@@ -1,23 +1,40 @@
-import 'package:firebase_core/firebase_core.dart';
+
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:provider/provider.dart';
+
+import 'package:picsapp/firebase_options.dart';
+import 'package:picsapp/provider/homeprovider.dart';
 import 'package:picsapp/provider/logic.dart';
 import 'package:picsapp/screens/admin/user/signup.dart';
-// import 'firebase_options.dart'; // <-- Uncomment this if you ran "flutterfire configure"
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize Firebase
+
   await Firebase.initializeApp(
-    // options: DefaultFirebaseOptions.currentPlatform, // <-- Uncomment this if you have firebase_options.dart
+    options: DefaultFirebaseOptions.currentPlatform,
   );
+// Hive
+  await Hive.initFlutter();
+// local storage
+
+await Hive.openBox<String>("favorites");
+await Hive.openBox<String>("downloads");
+
 
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => SignInProvider()),
-        ChangeNotifierProvider(create: (_) => SignUpProvider()),
+        ChangeNotifierProvider<SignInProvider>(
+          create: (_) => SignInProvider(),
+        ),
+        ChangeNotifierProvider<SignUpProvider>(
+          create: (_) => SignUpProvider(),
+        ),
+        ChangeNotifierProvider<HomeProvider>(
+          create: (_) => HomeProvider(),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -33,7 +50,7 @@ class MyApp extends StatelessWidget {
       title: 'Pices',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      home: const SignUpScreen(), // Or SignInScreen
+      home: const SignUpScreen(),
     );
   }
 }

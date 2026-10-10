@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:picsapp/screens/admin/user/homescree.dart';
 import 'package:provider/provider.dart';
 import 'package:picsapp/provider/logic.dart';
 import 'package:picsapp/widgets/authtextfield.dart';
@@ -224,7 +225,12 @@ class _SignInScreenState extends State<SignInScreen> {
               ),
               const SizedBox(height: 10),
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => HomeScreen()),
+                  );
+                },
                 child: Text(
                   "Guest Mode",
                   style: TextStyle(
