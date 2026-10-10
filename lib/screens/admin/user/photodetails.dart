@@ -1,23 +1,59 @@
+
 import 'dart:io';
 
-import 'package:http/http.dart' as http;
-
 import 'package:flutter/material.dart';
-
+import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:picsapp/provider/homeprovider.dart';
+import 'package:picsapp/services/hive_service.dart';
 
 class PhotoDetailsScreen extends StatefulWidget {
   final PhotoModel photo;
 
-  const PhotoDetailsScreen({super.key, required this.photo});
+  const PhotoDetailsScreen({
+    super.key,
+    required this.photo,
+  });
 
   @override
-  State<PhotoDetailsScreen> createState() => _PhotoDetailsScreenState();
+  State<PhotoDetailsScreen> createState() =>
+      _PhotoDetailsScreenState();
 }
 
 class _PhotoDetailsScreenState extends State<PhotoDetailsScreen> {
   bool isDownloading = false;
+
+  bool get isFavorite {
+    return HiveService.favoritesBox
+            .get(widget.photo.id, defaultValue: false) ??
+        false;
+  }
+
+  Future<void> toggleFavorite() async {
+    final box = HiveService.favoritesBox;
+    final photoId = widget.photo.id;
+
+    if (isFavorite) {
+      await box.delete(photoId);
+    } else {
+      await box.put(photoId, true);
+    }
+
+    if (!mounted) return;
+
+    setState(() {});
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isFavorite
+              ? 'Added to Favorites ❤️'
+              : 'Removed from Favorites',
+        ),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
 
   Future<void> downloadImage() async {
     try {
@@ -25,7 +61,9 @@ class _PhotoDetailsScreenState extends State<PhotoDetailsScreen> {
         isDownloading = true;
       });
 
-      final response = await http.get(Uri.parse(widget.photo.imageUrl));
+      final response = await http.get(
+        Uri.parse(widget.photo.imageUrl),
+      );
 
       if (response.statusCode != 200) {
         throw Exception('Download failed');
@@ -43,14 +81,18 @@ class _PhotoDetailsScreenState extends State<PhotoDetailsScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Image downloaded successfully')),
+        const SnackBar(
+          content: Text('Image downloaded successfully'),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to download image')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to download image'),
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -66,41 +108,72 @@ class _PhotoDetailsScreenState extends State<PhotoDetailsScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xff060A14),
-
       appBar: AppBar(
         backgroundColor: const Color(0xff060A14),
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(
           'Photo Details',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
-
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ================= IMAGE =================
-
             SizedBox(
               width: double.infinity,
-              child: Image.network(photo.imageUrl, fit: BoxFit.cover),
+              child: Image.network(
+                photo.imageUrl,
+                fit: BoxFit.cover,
+              ),
             ),
 
-            // ================= DETAILS =================
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    photo.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  // Photo name + Favorite icon
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          photo.name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xff151B2B),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: IconButton(
+                          onPressed: toggleFavorite,
+                          tooltip: isFavorite
+                              ? 'Remove from Favorites'
+                              : 'Add to Favorites',
+                          icon: Icon(
+                            isFavorite
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            color: isFavorite
+                                ? Colors.red
+                                : const Color(0xffB8BDCE),
+                            size: 28,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 15),
@@ -112,11 +185,13 @@ class _PhotoDetailsScreenState extends State<PhotoDetailsScreen> {
                         color: Color(0xff8F94A7),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        'Uploaded by ${photo.uploadedBy}',
-                        style: const TextStyle(
-                          color: Color(0xffB8BDCE),
-                          fontSize: 15,
+                      Expanded(
+                        child: Text(
+                          'Uploaded by ${photo.uploadedBy}',
+                          style: const TextStyle(
+                            color: Color(0xffB8BDCE),
+                            fontSize: 15,
+                          ),
                         ),
                       ),
                     ],
@@ -143,12 +218,12 @@ class _PhotoDetailsScreenState extends State<PhotoDetailsScreen> {
 
                   const SizedBox(height: 30),
 
-                  // ================= DOWNLOAD =================
                   SizedBox(
                     width: double.infinity,
                     height: 55,
                     child: ElevatedButton.icon(
-                      onPressed: isDownloading ? null : downloadImage,
+                      onPressed:
+                          isDownloading ? null : downloadImage,
                       icon: isDownloading
                           ? const SizedBox(
                               height: 20,
@@ -160,7 +235,9 @@ class _PhotoDetailsScreenState extends State<PhotoDetailsScreen> {
                             )
                           : const Icon(Icons.download),
                       label: Text(
-                        isDownloading ? 'Downloading...' : 'Download Image',
+                        isDownloading
+                            ? 'Downloading...'
+                            : 'Download Image',
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xff6255F5),

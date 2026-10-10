@@ -6,9 +6,13 @@ class HiveService {
 
   static Future<void> init() async {
     await Hive.initFlutter();
-    await Hive.openBox<bool>(favoritesBoxName);
+
+    if (!Hive.isBoxOpen(favoritesBoxName)) {
+      await Hive.openBox<bool>(favoritesBoxName);
+    }
   }
 
-  static Box<bool> get favoritesBox =>
-      Hive.box<bool>(favoritesBoxName);
+  static Box<bool> get favoritesBox {
+    return Hive.box<bool>(favoritesBoxName);
+  }
 }

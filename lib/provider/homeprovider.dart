@@ -140,4 +140,5 @@ class HomeProvider extends ChangeNotifier {
     currentIndex = index;
     notifyListeners();
   }
+  List<PhotoModel> get allPhotosForFavorites => _allPhotos;
 }
