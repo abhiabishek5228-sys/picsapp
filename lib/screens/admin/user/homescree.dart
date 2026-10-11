@@ -19,24 +19,38 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Future<void> _pickImage() async {
-  final ImagePicker picker = ImagePicker();
+  
+  
+Future<void> _pickImage() async {
+  try {
+    final ImagePicker picker = ImagePicker();
 
-  final XFile? image = await picker.pickImage(
-    source: ImageSource.gallery,
-  );
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+    );
 
-  if (!mounted || image == null) return;
+    if (!mounted || image == null) return;
 
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => UploadPhotoScreen(
-        image: image,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UploadPhotoScreen(
+          image: image,
+        ),
       ),
-    ),
-  );
+    );
+  } catch (e) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Image selection failed: $e'),
+      ),
+    );
+  }
 }
+
+
   final TextEditingController searchController =
       TextEditingController();
 
