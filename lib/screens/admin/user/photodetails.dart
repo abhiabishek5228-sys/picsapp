@@ -1,9 +1,10 @@
 
-import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
+import 'package:gal/gal.dart';
+import 'package:universal_html/html.dart' as html;
+
 import 'package:picsapp/provider/homeprovider.dart';
 import 'package:picsapp/services/hive_service.dart';
 
@@ -47,8 +48,8 @@ class _PhotoDetailsScreenState extends State<PhotoDetailsScreen> {
       SnackBar(
         content: Text(
           isFavorite
-              ? 'Added to Favorites ❤️'
-              : 'Removed from Favorites',
+              ? 'Removed from Favorites'
+              : 'Added to Favorites ❤️',
         ),
         duration: const Duration(seconds: 1),
       ),
@@ -56,48 +57,97 @@ class _PhotoDetailsScreenState extends State<PhotoDetailsScreen> {
   }
 
   Future<void> downloadImage() async {
+    if (isDownloading) return;
+
+    setState(() => isDownloading = true);
+
     try {
-      setState(() {
-        isDownloading = true;
-      });
+      final photo = widget.photo;
 
       final response = await http.get(
-        Uri.parse(widget.photo.imageUrl),
+        Uri.parse(photo.imageUrl),
       );
 
-      if (response.statusCode != 200) {
-        throw Exception('Download failed');
+      if (response.statusCode != 200 ||
+          response.bodyBytes.isEmpty) {
+        throw Exception('Image download failed');
       }
 
-      final directory = await getApplicationDocumentsDirectory();
-
       final fileName =
-          '${widget.photo.id}_${widget.photo.name.replaceAll(' ', '_')}.jpg';
+          '${photo.id}_${photo.name.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_')}.jpg';
 
-      final file = File('${directory.path}/$fileName');
+      if (kIsWeb) {
+        // Web: trigger a browser download.
+        final blob = html.Blob(
+          [response.bodyBytes],
+          'image/jpeg',
+        );
 
-      await file.writeAsBytes(response.bodyBytes);
+        final objectUrl = html.Url.createObjectUrlFromBlob(blob);
+
+        final anchor = html.AnchorElement(href: objectUrl)
+          ..setAttribute('download', fileName)
+          ..style.display = 'none';
+
+        html.document.body?.append(anchor);
+        anchor.click();
+        anchor.remove();
+
+        html.Url.revokeObjectUrl(objectUrl);
+      } else {
+        // Android/iOS: save image to the device gallery.
+        var hasAccess = await Gal.hasAccess();
+
+        if (!hasAccess) {
+          await Gal.requestAccess();
+          hasAccess = await Gal.hasAccess();
+        }
+
+        if (!hasAccess) {
+          throw Exception('Gallery permission denied');
+        }
+
+        await Gal.putImageBytes(
+          response.bodyBytes,
+          album: 'PICES',
+        );
+      }
+
+      // Store download history in Hive.
+      await HiveService.downloadsBox.put(photo.id, {
+        'id': photo.id,
+        'name': photo.name,
+        'imageUrl': photo.imageUrl,
+        'category': photo.category,
+        'uploadedBy': photo.uploadedBy,
+        'fileName': fileName,
+        'downloadedAt': DateTime.now().toIso8601String(),
+      });
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Image downloaded successfully'),
+        SnackBar(
+          content: Text(
+            kIsWeb
+                ? 'Download started! Check browser Downloads.'
+                : 'Image saved to Gallery! ❤️',
+          ),
         ),
       );
     } catch (e) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to download image'),
+        SnackBar(
+          content: Text(
+            'Download failed: ${e.toString()}',
+          ),
         ),
       );
     } finally {
       if (mounted) {
-        setState(() {
-          isDownloading = false;
-        });
+        setState(() => isDownloading = false);
       }
     }
   }
@@ -129,15 +179,25 @@ class _PhotoDetailsScreenState extends State<PhotoDetailsScreen> {
               child: Image.network(
                 photo.imageUrl,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const SizedBox(
+                    height: 250,
+                    child: Center(
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        color: Colors.white54,
+                        size: 50,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Photo name + Favorite icon
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -175,9 +235,7 @@ class _PhotoDetailsScreenState extends State<PhotoDetailsScreen> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 15),
-
                   Row(
                     children: [
                       const Icon(
@@ -196,9 +254,7 @@ class _PhotoDetailsScreenState extends State<PhotoDetailsScreen> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 12),
-
                   Row(
                     children: [
                       const Icon(
@@ -215,9 +271,7 @@ class _PhotoDetailsScreenState extends State<PhotoDetailsScreen> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 30),
-
                   SizedBox(
                     width: double.infinity,
                     height: 55,

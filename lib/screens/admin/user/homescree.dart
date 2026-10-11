@@ -2,13 +2,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:picsapp/screens/admin/user/uploadphotoscreen.dart';
-import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:picsapp/screens/admin/user/downloads.dart';
+import 'package:provider/provider.dart';
 
 import 'package:picsapp/provider/homeprovider.dart';
 import 'package:picsapp/screens/admin/user/photodetails.dart';
 import 'package:picsapp/screens/admin/user/savedscreen.dart';
+import 'package:picsapp/screens/admin/user/uploadphotoscreen.dart';
 import 'package:picsapp/services/hive_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -19,40 +20,37 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  
-  
-Future<void> _pickImage() async {
-  try {
-    final ImagePicker picker = ImagePicker();
-
-    final XFile? image = await picker.pickImage(
-      source: ImageSource.gallery,
-    );
-
-    if (!mounted || image == null) return;
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => UploadPhotoScreen(
-          image: image,
-        ),
-      ),
-    );
-  } catch (e) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Image selection failed: $e'),
-      ),
-    );
-  }
-}
-
-
   final TextEditingController searchController =
       TextEditingController();
+
+  Future<void> _pickImage() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+      );
+
+      if (!mounted || image == null) return;
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => UploadPhotoScreen(
+            image: image,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Image selection failed: $e'),
+        ),
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -110,16 +108,16 @@ Future<void> _pickImage() async {
       ),
 
       // UPLOAD BUTTON
-floatingActionButton: FloatingActionButton(
-  onPressed: _pickImage,
-  backgroundColor: const Color(0xff6255F5),
-  shape: const CircleBorder(),
-  child: const Icon(
-    Icons.add,
-    color: Colors.white,
-    size: 30,
-  ),
-),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _pickImage,
+        backgroundColor: const Color(0xff6255F5),
+        shape: const CircleBorder(),
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+          size: 30,
+        ),
+      ),
       floatingActionButtonLocation:
           FloatingActionButtonLocation.centerDocked,
 
@@ -288,7 +286,7 @@ floatingActionButton: FloatingActionButton(
     );
   }
 
-  // PHOTO CARD + HIVE FAVORITE + SNACKBAR
+  // PHOTO CARD + HIVE FAVORITES
   Widget _buildPhotoCard(PhotoModel photo) {
     return ValueListenableBuilder<Box<bool>>(
       valueListenable: HiveService.favoritesBox.listenable(),
@@ -379,7 +377,7 @@ floatingActionButton: FloatingActionButton(
                             content: Text(
                               'Photo removed from favorites',
                             ),
-                           backgroundColor: Colors.grey,
+                            backgroundColor: Colors.grey,
                             duration: Duration(seconds: 2),
                           ),
                         );
@@ -391,9 +389,9 @@ floatingActionButton: FloatingActionButton(
                         messenger.showSnackBar(
                           const SnackBar(
                             content: Text(
-                              'Photo successfully saved to favorites! ',
+                              'Photo successfully saved to favorites!',
                             ),
-                            backgroundColor:Colors.grey,
+                            backgroundColor: Colors.grey,
                             duration: Duration(seconds: 2),
                           ),
                         );
@@ -494,6 +492,13 @@ floatingActionButton: FloatingActionButton(
             context,
             MaterialPageRoute(
               builder: (_) => SavedScreen(),
+            ),
+          );
+        } else if (index == 2) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const DownloadsScreen(),
             ),
           );
         } else {

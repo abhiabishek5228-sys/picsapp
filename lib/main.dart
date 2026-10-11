@@ -12,10 +12,10 @@ import 'package:picsapp/screens/admin/user/signup.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Hive initialization
+  // Initialize Hive before starting the app.
   await HiveService.init();
 
-  // Firebase initialization
+  // Initialize Firebase.
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
